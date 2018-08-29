@@ -111,3 +111,84 @@ resource "aws_route53_record" "dns" {
     evaluate_target_health = true
   }
 }
+
+# Here comes autoscaling
+resource "aws_appautoscaling_target" "target" {
+  resource_id = "service/${data.terraform_remote_state.remote.ecs_cluster}/${var.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  min_capacity       = 1
+  max_capacity       = 5
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "scale-up" {
+  name               = "${var.name}-up"
+  resource_id        = "service/${data.terraform_remote_state.remote.ecs_cluster}/${var.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 60
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_lower_bound = 0
+      scaling_adjustment          = 1
+    }
+  }
+
+  depends_on = ["aws_appautoscaling_target.target"]
+}
+
+resource "aws_cloudwatch_metric_alarm" "metric-up" {
+  alarm_name          = "${var.name}-up"
+  namespace           = "AWS/ECS"
+  metric_name         = "CPUUtilization"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  period              = 60
+  statistic           = "Average"
+  threshold           = 60
+  dimensions = {
+    ClusterName = "${data.terraform_remote_state.remote.ecs_cluster}"
+    ServiceName = "${var.name}"
+  }
+  alarm_actions       = ["${aws_appautoscaling_policy.scale-up.arn}"]
+}
+
+resource "aws_appautoscaling_policy" "scale-down" {
+  name               = "${var.name}-down"
+  resource_id        = "service/${data.terraform_remote_state.remote.ecs_cluster}/${var.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 60
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = "-1"
+    }
+  }
+
+  depends_on = ["aws_appautoscaling_target.target"]
+}
+
+resource "aws_cloudwatch_metric_alarm" "metric-down" {
+  alarm_name          = "${var.name}-down"
+  namespace           = "AWS/ECS"
+  metric_name         = "CPUUtilization"
+  comparison_operator = "LessThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  period              = 60
+  statistic           = "Average"
+  threshold           = 30
+  dimensions = {
+    ClusterName = "${data.terraform_remote_state.remote.ecs_cluster}"
+    ServiceName = "${var.name}"
+  }
+  alarm_actions       = ["${aws_appautoscaling_policy.scale-down.arn}"]
+}

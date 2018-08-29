@@ -11,6 +11,10 @@
             "value": "-Xmx128m -Duser.timezone=Europe/Berlin -Dorg.apache.commons.jelly.tags.fmt.timeZone=Europe/Berlin"
         },
         {
+            "name": "JENKINS_ENV_HOST_IP",
+            "value": "172.17.0.1"
+        },
+        {
             "name": "JENKINS_ENV_CONFIG_YML_URL",
             "value": "s3://${bucket}/${config}"
         },
@@ -30,17 +34,22 @@
     "portMappings": [
         {
             "containerPort": 8080,
-            "hostPort": 0
+            "hostPort": 8080
         },
         {
             "containerPort": 50000,
-            "hostPort": 0
+            "hostPort": 50000
         }
     ],
     "mountPoints" : [
       {
         "sourceVolume" : "jenkins_home",
         "containerPath" : "/var/jenkins_home",
+        "readonly" : false
+      },
+      {
+        "sourceVolume" : "docker",
+        "containerPath" : "/var/run/docker.sock",
         "readonly" : false
       }
     ]

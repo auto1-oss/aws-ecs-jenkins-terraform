@@ -5,6 +5,21 @@ security:
   remove_master_envvars:
   - '.*PASSWORD.*'
 
+clouds:
+  docker-cloud:
+    type: docker
+    dockerHostUri: 'unix:///var/run/docker.sock'
+    templates:
+      - name: docker-slave
+        image: auto1/jnlp-slave-terraform:latest
+        labels:
+          - docker
+        remoteFs: /home/jenkins
+        jvmArgs: -Xmx128m
+        volumes:
+          - '/var/run/docker.sock:/var/run/docker.sock'
+        instanceCap: '1'
+
 job_dsl_scripts:
   - |
     // Creates a free style project

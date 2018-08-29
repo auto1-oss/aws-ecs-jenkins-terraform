@@ -1,3 +1,7 @@
+variable "version" {
+  description = "Application version"
+}
+
 variable "region" {
   description = "AWS region"
 }

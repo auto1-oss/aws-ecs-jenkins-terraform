@@ -46,7 +46,7 @@ module "asg" {
   lc_name = "${var.name_prefix}-v1.0.0"
 
   image_id             = "${data.aws_ami.amazon_linux_ecs.id}"
-  instance_type        = "t2.micro"
+  instance_type        = "m4.large"
   security_groups      = ["${aws_security_group.internal.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance.name}"
   key_name             = "${aws_key_pair.default.key_name}"
