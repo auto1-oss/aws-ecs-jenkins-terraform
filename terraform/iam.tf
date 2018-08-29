@@ -57,10 +57,21 @@ resource "aws_iam_policy" "custom" {
         {
             "Effect": "Allow",
             "Action": [
+                "application-autoscaling:*",
+                "iam:CreateServiceLinkedRole",
+                "cloudwatch:DescribeAlarms",
+                "cloudwatch:PutMetricAlarm"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
                 "route53:ChangeResourceRecordSets",
                 "route53:CreateHealthCheck",
                 "route53:DeleteHealthCheck",
                 "route53:Get*",
+                "route53:List*",
                 "route53:Update*"
             ],
             "Resource": [

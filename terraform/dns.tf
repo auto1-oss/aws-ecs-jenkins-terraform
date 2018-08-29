@@ -25,6 +25,10 @@ resource "aws_route53_record" "jenkins" {
   }
 }
 
+output "private_zone_name" {
+  value = "${aws_route53_zone.private.name}"
+}
+
 output "private_zone_id" {
   value = "${aws_route53_zone.private.zone_id}"
 }
