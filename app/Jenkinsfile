@@ -32,6 +32,7 @@ cd app/terraform
 terraform init -force-copy
 terraform plan \\
     -var "region=\"${AWS_DEFAULT_REGION}\"" \\
+    -var "name=\"${NAME}\"" \\
     -target aws_ecr_repository.ecr \\
     -out ecs-deploy.plan
 terraform apply ecs-deploy.plan
@@ -81,6 +82,7 @@ fi
 #!/bin/bash -e
 cd terraform
 terraform plan \\
+    -var "name=\"${NAME}\"" \\
     -var "version=\"${SHORT_COMMIT}\"" \\
     -var "region=\"${AWS_DEFAULT_REGION}\"" \\
     -out ecs-deploy.plan
