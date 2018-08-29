@@ -1,0 +1,125 @@
+pipeline {
+
+    agent {
+        node {
+            label "docker"
+        }
+    }
+
+// TODO set correct ECS cluster
+    environment {
+        NAME = "iplookup"
+        ECS_CLUSTER = "aws-berlin"
+        AWS_DEFAULT_REGION = "eu-central-1"
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        timeout(time: 1, unit: 'HOURS')
+        timestamps()
+        ansiColor('xterm')
+    }
+
+    stages {
+
+        stage('Create ECR repo') {
+            steps {
+                sh('''
+#!/bin/bash -e
+cd app/terraform
+[ -d .terraform ] && rm -rf .terraform
+[ -f terraform.tfstate.backup ] && rm terraform.tfstate.backup
+terraform init -force-copy
+terraform plan \\
+    -var "region=\"${AWS_DEFAULT_REGION}\"" \\
+    -target aws_ecr_repository.ecr \\
+    -out ecs-deploy.plan
+terraform apply ecs-deploy.plan
+
+echo "Cleanup"
+rm -v ecs-deploy.plan
+''')
+            }
+        }
+
+        stage('Build docker') {
+            steps {
+
+                script {
+                    env.GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+                    env.SHORT_COMMIT = GIT_COMMIT.take(7)
+                }
+
+                sh('''
+#!/bin/bash -e
+echo "** Login to ECR"
+eval `aws ecr get-login --no-include-email`
+
+echo "** Building docker image"
+cd ../
+export ECR="`terraform output | awk '/ecr_url/ {print $NF}'`"
+docker build --pull --force-rm -t $ECR:latest .
+
+echo "Pushing docker image"
+docker tag $ECR:latest $ECR:$SHORT_COMMIT
+docker push $ECR:latest
+docker push $ECR:$SHORT_COMMIT
+
+TAG="$(git tag --contains $GIT_COMMIT)"
+if [ "" != "$TAG" ]; then
+    echo "$GIT_COMMIT contains tag $TAG"
+    docker tag $ECR:$SHORT_COMMIT $ECR:$TAG
+    docker push $ECR:$TAG
+fi
+                ''')
+            }
+        }
+
+        stage('Deploy with Terraform') {
+            steps {
+                sh('''
+#!/bin/bash -e
+cd terraform
+terraform plan \\
+    -var "version=\"${SHORT_COMMIT}\"" \\
+    -var "region=\"${AWS_DEFAULT_REGION}\"" \\
+    -out ecs-deploy.plan
+terraform apply ecs-deploy.plan
+
+echo "Cleanup"
+rm -v ecs-deploy.plan
+''')
+            }
+        }
+
+        stage('ECS wait for deploy') {
+            steps {
+                sh('''
+#!/bin/bash
+aws ecs wait services-stable --cluster $ECS_CLUSTER --services $NAME
+''')
+            }
+        }
+    }
+
+/* Code to send email in case of failure
+    post {
+        failure {
+            script {
+                env.logs = currentBuild.rawBuild.getLog(50).join('\n')
+            }
+            emailext (
+                subject: "FAILURE: ${env.JOB_NAME} Build # ${env.BUILD_NUMBER} ",
+                body: """FAILED: Job ${env.JOB_NAME} [${env.BUILD_NUMBER}]':
+Check console output at ${env.BUILD_URL}console
+
+...
+${env.logs}
+""",
+                // TODO: put your or your email address here
+                to: 'devops@example.local'
+            )
+        }
+    }
+*/
+}

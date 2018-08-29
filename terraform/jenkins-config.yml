@@ -1,0 +1,25 @@
+security:
+  realm: jenkins_database
+  adminPassword: ${JENKINS_ADMIN_PASSWORD}
+
+  remove_master_envvars:
+  - '.*PASSWORD.*'
+
+job_dsl_scripts:
+  - |
+    // Creates a free style project
+    pipelineJob('deploy'){
+      definition {
+        cpsScm {
+          scm {
+            git {
+              remote {
+                url('https://github.com/auto1-oss/aws-ecs-jenkins-terraform.git')
+              }
+              branches("refs/heads/master")
+            }
+          }
+          scriptPath('app/Jenkinsfile')
+        }
+      }
+    }

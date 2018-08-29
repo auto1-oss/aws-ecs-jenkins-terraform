@@ -1,0 +1,44 @@
+[
+  {
+    "name": "jenkins-master",
+    "image": "odavid/my-bloody-jenkins:lts",
+    "cpu": 128,
+    "memoryReservation": 256,
+    "essential": true,
+    "environment" : [
+        {
+            "name": "JAVA_OPTS",
+            "value": "-Xmx128m -Duser.timezone=Europe/Berlin -Dorg.apache.commons.jelly.tags.fmt.timeZone=Europe/Berlin"
+        },
+        {
+            "name": "JENKINS_ENV_CONFIG_YML_URL",
+            "value": "s3://${bucket}/${config}"
+        },
+        {
+            "name": "JENKINS_ENV_ADMIN_USER",
+            "value": "admin"
+        },
+        {
+            "name": "JENKINS_ADMIN_PASSWORD",
+            "value": "${password}"
+        }
+    ],
+    "portMappings": [
+        {
+            "containerPort": 8080,
+            "hostPort": 0
+        },
+        {
+            "containerPort": 50000,
+            "hostPort": 0
+        }
+    ],
+    "mountPoints" : [
+      {
+        "sourceVolume" : "jenkins_home",
+        "containerPath" : "/var/jenkins_home",
+        "readonly" : false
+      }
+    ]
+  }
+]
