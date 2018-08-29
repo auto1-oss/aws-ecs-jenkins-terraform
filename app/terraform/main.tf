@@ -114,7 +114,7 @@ resource "aws_route53_record" "dns" {
 
 # Here comes autoscaling
 resource "aws_appautoscaling_target" "target" {
-  resource_id = "service/${data.terraform_remote_state.remote.ecs_cluster}/${var.name}"
+  resource_id        = "service/${data.terraform_remote_state.remote.ecs_cluster}/${var.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   min_capacity       = 1
   max_capacity       = 5
@@ -150,11 +150,13 @@ resource "aws_cloudwatch_metric_alarm" "metric-up" {
   period              = 60
   statistic           = "Average"
   threshold           = 60
+
   dimensions = {
     ClusterName = "${data.terraform_remote_state.remote.ecs_cluster}"
     ServiceName = "${var.name}"
   }
-  alarm_actions       = ["${aws_appautoscaling_policy.scale-up.arn}"]
+
+  alarm_actions = ["${aws_appautoscaling_policy.scale-up.arn}"]
 }
 
 resource "aws_appautoscaling_policy" "scale-down" {
@@ -186,9 +188,11 @@ resource "aws_cloudwatch_metric_alarm" "metric-down" {
   period              = 60
   statistic           = "Average"
   threshold           = 30
+
   dimensions = {
     ClusterName = "${data.terraform_remote_state.remote.ecs_cluster}"
     ServiceName = "${var.name}"
   }
-  alarm_actions       = ["${aws_appautoscaling_policy.scale-down.arn}"]
+
+  alarm_actions = ["${aws_appautoscaling_policy.scale-down.arn}"]
 }

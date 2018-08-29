@@ -60,7 +60,8 @@ resource "aws_iam_policy" "custom" {
                 "application-autoscaling:*",
                 "iam:CreateServiceLinkedRole",
                 "cloudwatch:DescribeAlarms",
-                "cloudwatch:PutMetricAlarm"
+                "cloudwatch:PutMetricAlarm",
+                "route53:GetChange"
             ],
             "Resource": "*"
         },
