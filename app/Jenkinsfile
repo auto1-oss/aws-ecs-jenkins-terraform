@@ -29,6 +29,7 @@ pipeline {
 cd app/terraform
 [ -d .terraform ] && rm -rf .terraform
 [ -f terraform.tfstate.backup ] && rm terraform.tfstate.backup
+[ -f ecs-deploy.plan ] && rm ecs-deploy.plan
 terraform init -force-copy
 terraform plan \\
     -var "region=\"${AWS_DEFAULT_REGION}\"" \\
@@ -88,7 +89,7 @@ fi
             steps {
                 sh('''
 #!/bin/bash -e
-cd terraform
+cd app/terraform
 terraform plan \\
     -var "name=\"${NAME}\"" \\
     -var "version=\"${SHORT_COMMIT}\"" \\
