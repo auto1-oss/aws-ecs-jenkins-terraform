@@ -24,7 +24,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if ip == "" {
 		ip, _, _ = net.SplitHostPort(r.RemoteAddr)
 	}
-	fmt.Fprintf(w, "Hello, your IP is: %s\n", ip)
+	fmt.Fprintf(w, "Hello, AWS Group: %s\n", ip)
 }
 
 func logRequest(handler http.Handler) http.Handler {
