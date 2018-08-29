@@ -15,6 +15,10 @@
             "value": "s3://${bucket}/${config}"
         },
         {
+            "name": "JENKINS_ENV_PLUGINS",
+            "value": "ansicolor,timestamper,envinject"
+        },
+        {
             "name": "JENKINS_ENV_ADMIN_USER",
             "value": "admin"
         },

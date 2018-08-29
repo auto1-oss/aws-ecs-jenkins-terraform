@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# Wait for EFS creation
+sleep 120
+
 # Set ECS cluster name
 echo "ECS_CLUSTER=${ecs_cluster_name}" > /etc/ecs/ecs.config
 
