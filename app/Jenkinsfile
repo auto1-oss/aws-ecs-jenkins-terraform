@@ -55,13 +55,16 @@ rm -v ecs-deploy.plan
                 sh('''
 #!/bin/bash -e
 echo "** Login to ECR"
-
 # Hide eval output
 set +x
 eval `aws ecr get-login --no-include-email`
 set -x
 
+# Determine ECR url
+pwd
+cd app/terraform
 ECR=`terraform output | awk '/ecr_url/ {print $NF}'`
+
 echo "** Building docker image"
 cd ../
 docker build --pull --force-rm -t $ECR:latest .
